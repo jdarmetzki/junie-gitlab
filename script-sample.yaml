@@ -3,6 +3,9 @@ spec:
     project_token:
       type: string
       default: ""
+    project_token_access_level:
+      type: string
+      default: "MAINTAINER"
 ---
 
 variables:
@@ -12,6 +15,9 @@ variables:
   INPUT_TOKEN:
     value: "$[[ inputs.project_token ]]"
     description: "Project's access token"
+  PROJECT_ACCESS_TOKEN_ACCESS_LEVEL:
+    value: "$[[ inputs.project_token_access_level ]]"
+    description: "Access level for the created project access token (e.g., MAINTAINER, Developer, 40)"
 
 
 stages:
@@ -28,6 +34,8 @@ junie-init:
   image: registry.jetbrains.team/p/matterhorn/public/junie-gitlab-wrapper:latest
   script:
     - node /app/dist/cli.js init --verbose $PROJECTS_TO_INIT
+  variables:
+    PROJECT_ACCESS_TOKEN_ACCESS_LEVEL: "$[[ inputs.project_token_access_level ]]"
   when: manual
   rules:
     - if: $CI_PIPELINE_SOURCE == "web"

@@ -1,4 +1,5 @@
 import {logger} from "./utils/logging.js";
+import {AccessLevel} from "@gitbeaker/rest";
 
 export abstract class Variable<T> {
     protected constructor(
@@ -29,6 +30,47 @@ class BooleanVariable extends Variable<boolean> {
     }
 }
 
+/**
+ * The `AccessLevelVariable` class provides a mechanism to represent and manage
+ * environment variables related to gitlab access levels. It extends the base `Variable`
+ * class and processes the environment variable to interpret its value as a
+ * numerical access level or an enum-defined constant under `AccessLevel`.
+ * If the environment variable is not set or cannot be resolved to a valid
+ * number or enum value, the value defaults to `null`.
+ *
+ * Features:
+ * - Reads a key from the environment variables.
+ * - Converts the value of the environment variable to a number, if possible.
+ * - Maps string values to `AccessLevel` enumeration if applicable.
+ * - Defaults to `null` if conversion is not possible.
+ *
+ * Constructor:
+ * - Accepts a key to retrieve the environment variable.
+ * - Optionally accepts a mapped value.
+ * - Parses and validates the value from the environment.
+ */
+class AccessLevelVariable extends Variable<number | null> {
+    public constructor(key: string, mappedValue: string | null = null) {
+        const stringValue = process.env[key] ?? null;
+        let value: number | null = null;
+        if (stringValue) {
+            const numericValue = Number(stringValue);
+            if (stringValue.trim() !== "" && !isNaN(numericValue)) {
+                value = numericValue;
+            } else {
+                const upperValue = stringValue.toUpperCase();
+                if (upperValue in AccessLevel) {
+                    const enumValue = (AccessLevel as any)[upperValue];
+                    if (typeof enumValue === 'number') {
+                        value = enumValue;
+                    }
+                }
+            }
+        }
+        super(key, value, mappedValue);
+    }
+}
+
 export const webhookEnv = {
     isJunieWebhook: new StringVariable("JUNIE_WEBHOOK", "true"),
     // junieVersion: new StringVariable("JUNIE_VERSION"),
@@ -43,6 +85,8 @@ export const webhookEnv = {
     apiV4Url: new StringVariable("CI_API_V4_URL"),
     projectId: new NumericVariable("PROJECT_ID", "{{project.id}}"),
     pipelineId: new NumericVariable("CI_PIPELINE_ID"),
+
+    projectAccessTokenAccessLevel: new AccessLevelVariable("PROJECT_ACCESS_TOKEN_ACCESS_LEVEL"),
 
     eventKind: new StringVariable("EVENT_KIND", "{{object_kind}}"),
 

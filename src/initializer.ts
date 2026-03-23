@@ -59,7 +59,7 @@ export async function initialize(projectIds: number[]) {
                 PROJECT_ACCESS_TOKEN_NAME,
                 undefined,
                 ["write_repository", "api"],
-                AccessLevel.MAINTAINER, // refine this choice if needed
+                webhookEnv.projectAccessTokenAccessLevel.value ?? AccessLevel.MAINTAINER,
                 patExpiration.toISOString(),
             );
             try {
